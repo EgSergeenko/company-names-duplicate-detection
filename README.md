@@ -1,0 +1,1 @@
+# company-names-duplicate-detection
