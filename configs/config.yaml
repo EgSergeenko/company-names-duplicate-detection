@@ -1,0 +1,48 @@
+---
+# hydra logging settings
+defaults:
+  - _self_
+  -
+    ? "override hydra/hydra_logging"
+    : disabled
+  -
+    ? "override hydra/job_logging"
+    : disabled
+# experiment settings
+checkpoint:
+  load:
+    dir: models
+    filename: best_model.pth
+  save:
+    dir: models
+    filename: best_model.pth
+criterion_optimizer:
+  lr: 0.0001
+data:
+  dir: data/processed
+  filename: data.csv
+device: cpu
+epochs: 50
+model:
+  embedding_size: 128
+  hidden_size: 128
+optimizer:
+  lr: 0.005
+sampler:
+  m: 2
+scheduler:
+  gamma: 0.2
+  milestones:
+    - 5
+seed: 42
+symbols: " &'(),-./0123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+test_size: 0.05
+train_loader:
+  batch_size: 32
+  drop_last: true
+  shuffle: false
+val_loader:
+  batch_size: 1
+  drop_last: false
+  shuffle: false
+val_size: 0.05

@@ -1,0 +1,7 @@
+pandas==1.5.1
+hydra-core==1.2.0
+numpy==1.23.4
+tqdm==4.64.1
+scipy==1.9.2
+pytorch-metric-learning==1.6.2
+scikit-learn==1.1.2
