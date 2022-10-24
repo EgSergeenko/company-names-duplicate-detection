@@ -21,6 +21,9 @@ criterion_optimizer:
 data:
   dir: data/processed
   filename: data.csv
+raw_data:
+  dir: data/raw
+  filename: train.csv
 device: cpu
 epochs: 50
 model:
@@ -36,6 +39,9 @@ scheduler:
     - 5
 seed: 42
 symbols: " &'(),-./0123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+replaced_symbols: "0123456789!\"'():#?"
+allowed_symbols: ", ./-&abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+generate_data: true
 test_size: 0.05
 train_loader:
   batch_size: 32
