@@ -1,11 +1,13 @@
+import logging
 import os
 
 import hydra
 import torch
 import tqdm
+from omegaconf import DictConfig
 from pytorch_metric_learning.losses import ArcFaceLoss
 from pytorch_metric_learning.samplers import MPerClassSampler
-from torch.optim import AdamW
+from torch.optim import AdamW, Optimizer
 from torch.optim.lr_scheduler import MultiStepLR
 from torch.utils.data import DataLoader
 
@@ -16,7 +18,7 @@ from model import Model
 
 
 @hydra.main(version_base=None, config_path='../configs', config_name='config')
-def train(config):
+def train(config: DictConfig) -> None:
     logger = get_logger()
     device = torch.device(config.device)
     set_seed(config.seed)
@@ -27,9 +29,9 @@ def train(config):
     )
 
     train_data, val_data, _ = get_data_split(
-        sequences[:1000],
-        labels[:1000],
-        augmentation[:1000],
+        sequences,
+        labels,
+        augmentation,
         config.val_size,
         config.test_size,
     )
@@ -72,6 +74,7 @@ def train(config):
         input_size=len(config.symbols),
         hidden_size=config.model.hidden_size,
         embedding_size=config.model.embedding_size,
+        device=device,
     ).to(device)
     criterion = ArcFaceLoss(
         num_classes=len(set(train_labels)),
@@ -91,7 +94,7 @@ def train(config):
         gamma=config.scheduler.gamma,
     )
 
-    best_score, best_threshold = 0, 0
+    best_score, best_threshold = 0.0, 0.0
     for epoch in range(config.epochs):
         train_epoch(
             model,
@@ -127,14 +130,14 @@ def train(config):
 
 
 def train_epoch(
-    model,
-    data_loader,
-    optimizer,
-    criterion,
-    criterion_optimizer,
-    device,
-    epoch,
-):
+    model: torch.nn.Module,
+    data_loader: DataLoader,
+    optimizer: Optimizer,
+    criterion: torch.nn.Module,
+    criterion_optimizer: Optimizer,
+    device: torch.device,
+    epoch: int,
+) -> None:
     description = 'Training... Epoch: {0}'.format(
         epoch,
     )
@@ -144,9 +147,7 @@ def train_epoch(
         batch_embeddings, batch_labels = [], []
         for sample in batch:
             encoding, label = sample
-            h_0, c_0 = model.init_hidden()
-            h_0, c_0 = h_0.to(device), c_0.to(device)
-            output = model(encoding.to(device), h_0, c_0)
+            output = model(encoding.to(device))
             batch_embeddings.append(output)
             batch_labels.append(label)
 
@@ -167,12 +168,12 @@ def train_epoch(
 
 
 def eval_epoch(
-    model,
-    data_loader,
-    device,
-    epoch,
-    logger,
-):
+    model: torch.nn.Module,
+    data_loader: DataLoader,
+    device: torch.device,
+    epoch: int,
+    logger: logging.Logger,
+) -> tuple[float, float]:
     logger.info(
         'Evaluating... Epoch: {0}'.format(
             epoch,
@@ -183,7 +184,7 @@ def eval_epoch(
         embeddings,
         labels,
     )
-    best_score, best_threshold = 0, 0
+    best_score, best_threshold = 0.0, 0.0
     for score, threshold in scores:
         if score > best_score:
             best_score = score
@@ -198,7 +199,11 @@ def eval_epoch(
     return best_score, best_threshold
 
 
-def save_model(model, checkpoint_dir, checkpoint_filename):
+def save_model(
+    model: torch.nn.Module,
+    checkpoint_dir: str,
+    checkpoint_filename: str,
+) -> None:
     if not os.path.exists(checkpoint_dir):
         os.makedirs(checkpoint_dir)
     torch.save(

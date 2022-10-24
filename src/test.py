@@ -2,6 +2,7 @@ import os
 
 import hydra
 import torch
+from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 
 from common import (evaluate_f1_score, get_data_split, get_embeddings,
@@ -10,7 +11,7 @@ from data import Dataset
 
 
 @hydra.main(version_base=None, config_path='../configs', config_name='config')
-def test(config):
+def test(config: DictConfig) -> None:
     logger = get_logger()
     device = torch.device(config.device)
     set_seed(config.seed)
@@ -59,10 +60,10 @@ def test(config):
 
 
 def load_model(
-    checkpoint_dir,
-    checkpoint_filename,
-    device,
-):
+    checkpoint_dir: str,
+    checkpoint_filename: str,
+    device: torch.device,
+) -> torch.nn.Module:
     return torch.load(
         os.path.join(
             checkpoint_dir,

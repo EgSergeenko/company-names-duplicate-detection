@@ -2,18 +2,20 @@ import logging
 import os
 import random
 from collections import Counter
+from typing import Iterable
 
 import numpy as np
 import pandas as pd
 import torch
 from scipy.spatial.distance import cosine
 from sklearn.metrics import f1_score
+from torch.utils.data import DataLoader
 
 
 def get_logger(
-    level=logging.INFO,
-    fmt='[%(asctime)s] %(message)s',
-):
+    level: int = logging.INFO,
+    fmt: str = '[%(asctime)s] %(message)s',
+) -> logging.Logger:
     logger = logging.getLogger()
     logger.setLevel(level)
     formatter = logging.Formatter(fmt=fmt)
@@ -24,15 +26,15 @@ def get_logger(
     return logger
 
 
-def set_seed(seed):
+def set_seed(seed: int) -> None:
     random.seed(seed)
     torch.manual_seed(seed)
 
 
 def load_data(
-    data_dir,
-    data_filename,
-):
+    data_dir: str,
+    data_filename: str,
+) -> tuple[list[str], list[int], list[int]]:
     data = pd.read_csv(
         os.path.join(
             data_dir,
@@ -47,12 +49,12 @@ def load_data(
 
 
 def get_data_split(
-    sequences,
-    labels,
-    augmentations,
-    val_size=0.05,
-    test_size=0.05,
-):
+    sequences: list,
+    labels: list,
+    augmentations: list,
+    val_size: float = 0.05,
+    test_size: float = 0.05,
+) -> tuple[tuple[list, list], tuple[list, list], tuple[list, list]]:
     val_test_labels_set = random.sample(
         list(set(labels)),
         round(len(set(labels)) * (test_size + val_size)),
@@ -84,26 +86,24 @@ def get_data_split(
 
 
 def get_embeddings(
-    model,
-    data_loader,
-    device,
-):
+    model: torch.nn.Module,
+    data_loader: DataLoader,
+    device: torch.device,
+) -> tuple[list[np.ndarray], list[int]]:
     embeddings, labels = [], []
     model.eval()
     for sample in data_loader:
         encoding, label = sample[0]
         with torch.no_grad():
-            h_0, c_0 = model.init_hidden()
-            h_0, c_0 = h_0.to(device), c_0.to(device)
-            output = model(encoding.to(device), h_0, c_0)
+            output = model(encoding.to(device))
             embeddings.append(output.cpu().numpy())
             labels.append(label.item())
     return embeddings, labels
 
 
 def get_distances(
-    embeddings,
-):
+    embeddings: list[np.ndarray],
+) -> pd.DataFrame:
     distances = pd.DataFrame(
         data=np.zeros((len(embeddings), len(embeddings))),
     )
@@ -116,9 +116,9 @@ def get_distances(
 
 
 def get_query_anchor_split(
-    embeddings,
-    labels,
-):
+    embeddings: list,
+    labels: list,
+) -> tuple[tuple[list, list, list], tuple[list, list, list]]:
     labels_cnt = Counter(labels)
     anchor_labels_set = {lbl for lbl, cnt in labels_cnt.items() if cnt >= 2}
 
@@ -142,11 +142,11 @@ def get_query_anchor_split(
 
 
 def get_predictions(
-    distances,
-    query_indexes,
-    anchor_indexes,
-    threshold,
-):
+    distances: pd.DataFrame,
+    query_indexes: Iterable[int],
+    anchor_indexes: Iterable[int],
+    threshold: float,
+) -> list[int]:
     y_pred = []
     for query_idx in query_indexes:
         predicted_label = 0
@@ -162,7 +162,11 @@ def get_predictions(
     return y_pred
 
 
-def evaluate_f1_score(embeddings, labels, best_threshold=None):
+def evaluate_f1_score(
+    embeddings: list[np.ndarray],
+    labels: list[int],
+    best_threshold: float = None,
+) -> list[tuple[float, float]]:
     distances = get_distances(embeddings)
 
     queries, anchors = get_query_anchor_split(embeddings, labels)
