@@ -1,3 +1,4 @@
+"""Logic for training models."""
 import logging
 import os
 
@@ -19,6 +20,11 @@ from model import Model
 
 @hydra.main(version_base=None, config_path='../configs', config_name='config')
 def train(config: DictConfig) -> None:
+    """Train model.
+
+    Args:
+        config: Experiment settings.
+    """
     logger = get_logger()
     device = torch.device(config.device)
     set_seed(config.seed)
@@ -138,6 +144,17 @@ def train_epoch(
     device: torch.device,
     epoch: int,
 ) -> None:
+    """Train one epoch.
+
+    Args:
+        model: Model to train.
+        data_loader: Data to train.
+        optimizer: Optimizer for model.
+        criterion: Loss function.
+        criterion_optimizer: Optimizer for loss function.
+        device: Device to use.
+        epoch: Epoch number.
+    """
     description = 'Training... Epoch: {0}'.format(
         epoch,
     )
@@ -174,6 +191,18 @@ def eval_epoch(
     epoch: int,
     logger: logging.Logger,
 ) -> tuple[float, float]:
+    """Evaluate one epoch.
+
+    Args:
+        model: Model to evaluate.
+        data_loader: Data to evaluate.
+        device: Device to use.
+        epoch: Epoch number:
+        logger: Logger object.
+
+    Returns:
+        The best f1 score for epoch with the best threshold.
+    """
     logger.info(
         'Evaluating... Epoch: {0}'.format(
             epoch,
@@ -204,6 +233,13 @@ def save_model(
     checkpoint_dir: str,
     checkpoint_filename: str,
 ) -> None:
+    """Save model checkpoint.
+
+    Args:
+        model: Model weights.
+        checkpoint_dir: Path to directory with file.
+        checkpoint_filename: Filename.
+    """
     if not os.path.exists(checkpoint_dir):
         os.makedirs(checkpoint_dir)
     torch.save(

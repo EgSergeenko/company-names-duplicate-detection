@@ -1,3 +1,4 @@
+"""Logic used for training and testing models."""
 import logging
 import os
 import random
@@ -16,6 +17,15 @@ def get_logger(
     level: int = logging.INFO,
     fmt: str = '[%(asctime)s] %(message)s',
 ) -> logging.Logger:
+    """Get logger for tracking experiment.
+
+    Args:
+        level: Level of logging.
+        fmt: Format of log messages.
+
+    Returns:
+        Configured logger.
+    """
     logger = logging.getLogger()
     logger.setLevel(level)
     formatter = logging.Formatter(fmt=fmt)
@@ -27,6 +37,11 @@ def get_logger(
 
 
 def set_seed(seed: int) -> None:
+    """Set seed for reproducibility.
+
+    Args:
+        seed: Value of random seed.
+    """
     random.seed(seed)
     torch.manual_seed(seed)
 
@@ -35,6 +50,16 @@ def load_data(
     data_dir: str,
     data_filename: str,
 ) -> tuple[list[str], list[int], list[int]]:
+    """Get data for experiment.
+
+    Args:
+        data_dir: Path to directory with file.
+        data_filename: Filename.
+
+    Returns:
+        List with strings, list with string labels,
+            list of values is the string generated.
+    """
     data = pd.read_csv(
         os.path.join(
             data_dir,
@@ -55,6 +80,18 @@ def get_data_split(
     val_size: float = 0.05,
     test_size: float = 0.05,
 ) -> tuple[tuple[list, list], tuple[list, list], tuple[list, list]]:
+    """Split data for train, validation and test.
+
+    Args:
+        sequences: List of strings.
+        labels: List of sequences labels.
+        augmentations: List of values is the sequence generated.
+        val_size: Fraction of validation set.
+        test_size: Fraction of test set.
+
+    Returns:
+        Three splits of input lists.
+    """
     val_test_labels_set = random.sample(
         list(set(labels)),
         round(len(set(labels)) * (test_size + val_size)),
@@ -90,6 +127,16 @@ def get_embeddings(
     data_loader: DataLoader,
     device: torch.device,
 ) -> tuple[list[np.ndarray], list[int]]:
+    """Get embeddings with given model.
+
+    Args:
+        model: Model to use for calculating embeddings.
+        data_loader: Data to predict.
+        device: Device to use.
+
+    Returns:
+        Calculated embeddings.
+    """
     embeddings, labels = [], []
     model.eval()
     for sample in data_loader:
@@ -104,6 +151,14 @@ def get_embeddings(
 def get_distances(
     embeddings: list[np.ndarray],
 ) -> pd.DataFrame:
+    """Calculate distance matrix for embeddings.
+
+    Args:
+        embeddings: List of embeddings.
+
+    Returns:
+        Distance matrix.
+    """
     distances = pd.DataFrame(
         data=np.zeros((len(embeddings), len(embeddings))),
     )
@@ -119,6 +174,15 @@ def get_query_anchor_split(
     embeddings: list,
     labels: list,
 ) -> tuple[tuple[list, list, list], tuple[list, list, list]]:
+    """Split embeddings and labels to queries and anchors.
+
+    Args:
+        embeddings: List of embeddings.
+        labels: List of embedding labels.
+
+    Returns:
+        Split embeddings and labels and their indexes.
+    """
     labels_cnt = Counter(labels)
     anchor_labels_set = {lbl for lbl, cnt in labels_cnt.items() if cnt >= 2}
 
@@ -147,6 +211,17 @@ def get_predictions(
     anchor_indexes: Iterable[int],
     threshold: float,
 ) -> list[int]:
+    """Get predictions for query embeddings.
+
+    Args:
+        distances: Distance matrix.
+        query_indexes: Indexes of query embeddings.
+        anchor_indexes: Indexes of anchor embeddings.
+        threshold: Distance threshold value.
+
+    Returns:
+        Prediction results for embeddings.
+    """
     y_pred = []
     for query_idx in query_indexes:
         predicted_label = 0
@@ -165,8 +240,19 @@ def get_predictions(
 def evaluate_f1_score(
     embeddings: list[np.ndarray],
     labels: list[int],
-    best_threshold: float = None,
+    best_threshold: float | None = None,
 ) -> list[tuple[float, float]]:
+    """Evaluate f1 score with this threshold or find the best value for it.
+
+    Args:
+        embeddings: List of embeddings.
+        labels: List of embeddings labels.
+        best_threshold: Threshold value.
+
+    Returns:
+        List of pairs [(f1_score, threshold),...] if threshold wasn't passed.
+            Or [(f1_score, best_threshold)] if threshold value was passed.
+    """
     distances = get_distances(embeddings)
 
     queries, anchors = get_query_anchor_split(embeddings, labels)

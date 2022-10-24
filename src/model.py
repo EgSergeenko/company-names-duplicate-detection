@@ -1,7 +1,10 @@
+"""Model architecture."""
 import torch
 
 
 class Model(torch.nn.Module):
+    """Class that defines the architecture of the model."""
+
     def __init__(
         self,
         input_size: int,
@@ -12,6 +15,17 @@ class Model(torch.nn.Module):
         bidirectional: bool = True,
         dropout_fraction: float = 0.2,
     ) -> None:
+        """Init model instance.
+
+        Args:
+            input_size: Input dimension.
+            hidden_size: Hidden dimension.
+            embedding_size: Output (embedding) dimension.
+            device: Device.
+            lstm_num_layers: Number of LSTM layers.
+            bidirectional: Is LSTM bidirectional or not.
+            dropout_fraction: Dropout probability.
+        """
         super().__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
@@ -46,14 +60,22 @@ class Model(torch.nn.Module):
         self,
         x: torch.Tensor,
     ) -> torch.Tensor:
-        h_0, c_0 = self.init_hidden()
+        """Compute forward pass.
+
+        Args:
+            x: Input for forward pass.
+
+        Returns:
+            Output of forward pass.
+        """
+        h_0, c_0 = self._init_hidden()
         x, (_, _) = self.lstm(x, (h_0, c_0))
         x = self.fc1(x[-1])
         x = self.relu(x)
         x = self.dropout(x)
         return self.fc2(x)
 
-    def init_hidden(self) -> tuple[torch.Tensor, torch.Tensor]:
+    def _init_hidden(self) -> tuple[torch.Tensor, torch.Tensor]:
         d = self.lstm_num_layers
         if self.bidirectional:
             d *= 2

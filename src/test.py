@@ -1,3 +1,4 @@
+"""Logic for testing performance of models."""
 import os
 
 import hydra
@@ -12,6 +13,11 @@ from data import Dataset
 
 @hydra.main(version_base=None, config_path='../configs', config_name='config')
 def test(config: DictConfig) -> None:
+    """Test model performance.
+
+    Args:
+        config: Experiment settings.
+    """
     logger = get_logger()
     device = torch.device(config.device)
     set_seed(config.seed)
@@ -64,6 +70,16 @@ def load_model(
     checkpoint_filename: str,
     device: torch.device,
 ) -> torch.nn.Module:
+    """Load model weights.
+
+    Args:
+        checkpoint_dir: Path to directory with file
+        checkpoint_filename: Filename.
+        device: Device to map.
+
+    Returns:
+        Loaded model.
+    """
     return torch.load(
         os.path.join(
             checkpoint_dir,

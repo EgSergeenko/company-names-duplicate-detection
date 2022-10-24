@@ -1,14 +1,24 @@
+"""Data utils for model usage."""
 import torch
 from torch.utils.data import Dataset as BaseDataset
 
 
 class Dataset(BaseDataset):
+    """Dataset for company names."""
+
     def __init__(
         self,
         sequences: list[str],
         labels: list[int],
         symbols: str,
     ) -> None:
+        """Init dataset instance.
+
+        Args:
+            sequences: List of strings.
+            labels: List of sequence labels.
+            symbols: List of allowed symbols.
+        """
         self.symbols = symbols
         self.symbol_ids = {
             symbol: idx for idx, symbol in enumerate(self.symbols)
@@ -24,12 +34,25 @@ class Dataset(BaseDataset):
         ]
 
     def __len__(self) -> int:
+        """Get length of dataset.
+
+        Returns:
+            Dataset length.
+        """
         return len(self.encodings)
 
     def __getitem__(
         self,
         idx: int,
     ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Get sample by index.
+
+        Args:
+            idx: Index of sample.
+
+        Returns:
+            A pair of encoding and label.
+        """
         return self.encodings[idx], self.labels[idx]
 
     def _get_symbol_encoding(self, symbol: str) -> torch.Tensor:
