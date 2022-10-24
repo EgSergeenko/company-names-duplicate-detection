@@ -44,7 +44,11 @@ def create_dataset(
     )
     dict_comp_old = copy.deepcopy(dict_comp)
     if config.generate_data:
-        dict_comp = generate_data(dict_comp)
+        dict_comp = generate_data(
+            dict_comp,
+            config.replaced_symbols,
+            config.allowed_symbols,
+        )
     write_dataset(
         dict_comp,
         dict_comp_old,
@@ -243,11 +247,15 @@ def get_key(
 
 def generate_data(
     dict_comp: dict,
+    replaced_symbols: str,
+    allowed_symbols: str,
 ) -> dict:
     """Сompany name generation.
 
     Args:
         dict_comp: Dictionary with company names.
+        replaced_symbols: Replacement characters.
+        allowed_symbols: Allowed characters.
 
     Returns:
         Dictionary with new company names.
@@ -647,7 +655,7 @@ def generate_data(
                 new_name += ' ' + random.choice(list_of_countries)
 
             # добавление нового имени в словарь
-            if delete_extra(new_name) == '':
+            if delete_extra(new_name, replaced_symbols, allowed_symbols) == '':
                 continue
             dict_comp[index] |= set([deaccent(new_name)])
     return dict_comp
