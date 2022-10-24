@@ -24,7 +24,6 @@ def create_dataset(
         config.raw_data.dir,
         config.raw_data.filename,
     )
-    print('Data loaded')
     for ind in range(1, len(data) + 1):
         data.loc[ind, 'name_1'] = delete_extra(
             data.loc[ind, 'name_1'],
@@ -36,7 +35,6 @@ def create_dataset(
             config.replaced_symbols,
             config.allowed_symbols,
         )
-    print('Data extra delited')
     data = data[(data.name_1 != '') & (data.name_2 != '')]
     data_duplicate = data[data.is_duplicate == 1]
     data_not_duplicate = data[data.is_duplicate == 0]
@@ -44,11 +42,9 @@ def create_dataset(
         data_duplicate,
         data_not_duplicate,
     )
-    print('Dict_comp was created')
     dict_comp_old = copy.deepcopy(dict_comp)
     if config.generate_data:
         dict_comp = generate_data(dict_comp)
-        print('Dataset was generated')
     write_dataset(
         dict_comp,
         dict_comp_old,
@@ -654,8 +650,6 @@ def generate_data(
             if delete_extra(new_name) == '':
                 continue
             dict_comp[index] |= set([deaccent(new_name)])
-        if index // 500 == 0:
-            print('Created {0} compaties'.format(index))
     return dict_comp
 
 
