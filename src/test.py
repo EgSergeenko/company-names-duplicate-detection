@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 from common import (evaluate_f1_score, get_data_split, get_embeddings,
                     get_logger, load_data, set_seed)
 from data import Dataset
+from model import Model
 
 
 @hydra.main(version_base=None, config_path='../configs', config_name='config')
@@ -49,10 +50,19 @@ def test(config: DictConfig) -> None:
         drop_last=config.val_loader.drop_last,
     )
 
-    model = load_model(
-        config.checkpoint.load.dir,
-        config.checkpoint.load.filename,
-        device,
+    model = Model(
+        input_size=len(config.symbols),
+        hidden_size=config.model.hidden_size,
+        embedding_size=config.model.embedding_size,
+        device=device,
+    ).to(device)
+
+    model.load_state_dict(
+        load_model(
+            config.checkpoint.load.dir,
+            config.checkpoint.load.filename,
+            device,
+        ).state_dict(),
     )
 
     embeddings, labels = get_embeddings(model, test_loader, device)
